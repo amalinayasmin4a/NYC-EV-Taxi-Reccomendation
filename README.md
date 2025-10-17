@@ -1,53 +1,48 @@
-# NYC-EV-Taxi-Reccomendation
-Based on the NYC Taxi Performance Data, I have created a deck to evaluate their performance and operational base to then suggest solution to optimize their efficiency
-#Cleaning
-1️. Data Import & Initial Inspection
+NYC-EV-Taxi-Recommendation
+
+Based on the NYC Taxi Performance Data, this project evaluates the operational and pricing performance of NYC taxis to identify opportunities for efficiency improvement and support a cost-effective transition to electric vehicles (EVs).
+
+Data Cleaning Process
+1. Data Import & Initial Inspection
 
 Imported the dataset NYC_TLC_Cleaned_for_Report.xlsx.
 
-Used pandas to inspect with:
+Conducted initial inspection using:
 
 df.info(), df.head(), df.describe()
 
 
-Checked basic dimensions (df.shape) and data types.
+Checked dataset dimensions (df.shape) and verified data types.
 
-2️. Data Cleaning
+2. Data Cleaning
 a. Datetime Conversion
 
-Converted pickup and dropoff times to datetime objects:
+Converted pickup and dropoff columns to datetime format:
 
 df['lpep_pickup_datetime'] = pd.to_datetime(df['lpep_pickup_datetime'], errors='coerce')
 df['lpep_dropoff_datetime'] = pd.to_datetime(df['lpep_dropoff_datetime'], errors='coerce')
 
 b. Trip Duration Calculation
 
-Created trip duration in minutes:
+Calculated trip duration in minutes:
 
 df['trip_duration_minutes'] = (df['lpep_dropoff_datetime'] - df['lpep_pickup_datetime']).dt.total_seconds() / 60
 
 
-Filtered invalid durations:
+Removed invalid or zero-duration trips:
 
 df = df[df['trip_duration_minutes'] > 0]
 
-3️. Handling Missing Values
+3. Handling Missing Values
 
-Checked missing data using:
+Checked for missing data using df.isna().sum().
 
-df.isna().sum()
+Filled missing categorical data (e.g., RatecodeID) using mode or logical imputations.
 
-
-Filled or imputed critical categorical columns (e.g., RatecodeID) using mode or logical assumptions.
-
-4️. Outlier Detection & Removal
+4. Outlier Detection & Removal
 a. Distance–Fare Anomalies
 
-Removed cases where:
-
-Short distance but high fare
-
-Long distance but low fare
+Removed inconsistent entries:
 
 df = df[(df['trip_distance'] > 0.1)]
 df = df[~((df['trip_distance'] < 2) & (df['fare_amount'] > 40))]
@@ -55,43 +50,39 @@ df = df[~((df['trip_distance'] > 5) & (df['fare_amount'] > 100))]
 
 b. Fare-per-Mile Ratio Filter
 
-Added a new ratio:
+Created a ratio feature:
 
 df['fare_per_mile'] = df['fare_amount'] / df['trip_distance']
 
 
-Filtered extreme values:
+Removed extreme values:
 
 df = df[(df['fare_per_mile'] >= 1.5) & (df['fare_per_mile'] <= 2 * df['fare_per_mile'].median())]
 
 c. Trip Duration Outliers
 
-Removed unrealistic trips:
+Filtered unrealistic durations:
 
 df = df[df['trip_duration_minutes'] <= 180]
 
-d. Speed-Based Filtering (optional)
+d. Speed-Based Filtering (Optional)
 
-Calculated average speed:
+Calculated average speed and removed implausible values:
 
 df['avg_speed_mph'] = df['trip_distance'] / (df['trip_duration_minutes'] / 60)
-
-
-Removed impossible speeds (<1 mph or >100 mph):
-
 df = df[(df['avg_speed_mph'] > 1) & (df['avg_speed_mph'] < 100)]
 
-5️. Feature Engineering
+5. Feature Engineering
 
-Created new analytical columns for business insights:
+Created additional features for business and EV analysis:
 
 fare_per_mile → pricing efficiency
 
 avg_speed_mph → operational efficiency
 
-distance_category → EV suitability classification
+distance_category → trip classification for EV suitability
 
-Example:
+Example function:
 
 def categorize_distance(mi):
     if mi < 2: return "0–2 mi"
@@ -103,9 +94,9 @@ def categorize_distance(mi):
 
 df['distance_category'] = df['trip_distance'].apply(categorize_distance)
 
-6️. Data Validation
+6. Data Validation
 
-Validated results visually:
+Validated cleaning results visually using:
 
 Scatterplot: trip_distance vs fare_amount
 
@@ -113,20 +104,28 @@ Boxplot: fare_per_mile by distance_category
 
 Histogram: distribution of trip_duration_minutes
 
-Geographic check (via PULocationID → NYC Taxi Zones mapping)
+Geospatial checks: validated pickup locations using NYC Taxi Zone mapping
 
-7️.  Clean Data Export
+7. Clean Data Export
 
-Saved the clean, analysis-ready dataset:
+Saved the final cleaned and validated dataset:
 
 df.to_excel("NYC_TLC_Cleaned_EV_Ready.xlsx", index=False)
 
-*Summary of Results*
+Summary of Results
 
+Produced a clean, analysis-ready dataset with valid and consistent records.
 
+Removed anomalies, unrealistic fares, and trip irregularities.
 
-1.  Cleaned and validated X rows of quality data
-2. Removed anomalies and extreme fares
-3. Added business-relevant features for EV analysis and pricing optimization
-*Visualization*
-for Business Insight Visualization there is Bar Plot for trend, Pie Chart for proportion, and Maps for heatmap
+Added business-relevant analytical features for EV adoption analysis and fare optimization.
+
+Visualization
+
+For business insights, the following visualizations were used:
+
+Bar plots to analyze temporal and categorical trends.
+
+Pie charts to represent distribution and proportion.
+
+Heatmaps and geospatial maps for location-based performance insights.
